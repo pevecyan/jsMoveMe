@@ -1,0 +1,44 @@
+<html>
+	<head>
+		
+	</head>
+	<body>
+		<body>
+			<p id="info">-</p><br />
+		  <canvas id="gameCanvas" width="578" height="200">-</canvas>
+		  <script>
+		    var canvas = document.getElementById('gameCanvas');
+		    var context = canvas.getContext('2d');
+		
+		    window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+			
+			/*Tracking time*/
+			var start = null;
+			var currentTime = 0, previousTime = 0;
+			
+			/*Timer for events*/
+			var elapsedTime = 0;
+			
+			
+			
+			function update(gameTime){
+			  	if(start == null){start = gameTime;}
+			  	currentTime = gameTime-start;
+			  	
+			  	//Second loop example
+			  	elapsedTime+= (currentTime-previousTime);
+			  	if(elapsedTime >= 1000){
+			  		elapsedTime = 0;  		
+			  	}
+			  	
+			  	
+			  	document.getElementById("info").innerText = "fps:"+Math.round(1000/(currentTime-previousTime));
+			  	previousTime = currentTime;
+			  	requestAnimationFrame(update);
+			}
+			
+			requestAnimationFrame(update);
+		  </script>
+</body>
+	</body>
+</html>
