@@ -3,14 +3,32 @@
 		
 	</head>
 	<body>
-		<body>
-			<p id="info">-</p><br />
-		  <canvas id="gameCanvas" width="578" height="200">-</canvas>
+		<body style="background-color: lightgray; margin:0px;">
+
+		  <canvas id="gameCanvas" width="400" height="200">-</canvas>
 		  <script>
 		    var canvas = document.getElementById('gameCanvas');
 		    var context = canvas.getContext('2d');
 		
 		    window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+			
+			/*touch testing*/
+			var obj = document.getElementById('gameCanvas');
+			obj.addEventListener('touchmove', function(event) {
+			  // If there's exactly one finger inside this element
+			  if (event.targetTouches.length == 1) {
+			    var touch = event.targetTouches[0];
+			    // Place element where the finger is
+			    if(!(touch.pageY == 0 && touch.pageX == 0))
+			    {
+			    	mouseX = touch.pageX;
+			    	mouseY = touch.pageY;
+			    }
+			    document.getElementById("info1").innerText = mouseX+":"+mouseY;
+			  }
+			}, false);
+			
+			var mouseX = -10, mouseY = -10;
 			
 			/*Tracking time*/
 			var start = null;
@@ -19,26 +37,111 @@
 			/*Timer for events*/
 			var elapsedTime = 0;
 			
+			var movingObstaclesTime = 0;
+			var moving = false;
 			
-			
+			/*Obstacles*/
+			var obstacles = new Array();
+
 			function update(gameTime){
 			  	if(start == null){start = gameTime;}
 			  	currentTime = gameTime-start;
 			  	
-			  	//Second loop example
+			  	//event loop example//
 			  	elapsedTime+= (currentTime-previousTime);
-			  	if(elapsedTime >= 1000){
-			  		elapsedTime = 0;  		
+				if(elapsedTime >= 50){
+			  		elapsedTime = 0;
+			  		if(obstacles.length < 10){
+			  			if(!moving)createObstacle(true);
+			  			else createObstacle();
+			  			
+			  			
+			  		}else if(mouseX > 0 || mouseY>0){
+			  			moving = true;
+			  		}
+			  		
+			  		//document.getElementById("info1").innerText = ":"+obstacles.length;
+			  	}
+			  	
+			  	movingObstaclesTime += (currentTime-previousTime);
+			  	
+			  	if(moving){
+			  		for(var i = 0; i < obstacles.length; i++){
+			  			var speed = 1+currentTime/10000;
+			  			if(speed > 6)speed = 6;
+						obstacles[i].x -= speed;
+						
+						if(obstacles[i].x <= 0-obstacles[i].width){obstacles.shift(); i--;}
+					}
+					
+			  	}
+			  	for(var i = 0; i < obstacles.length; i++){
+			  		if(collides(obstacles[i],new Obstacle(20,20,mouseX-10, mouseY-1))){
+			  			document.getElementById("info2").innerText = "GameOVer";}
 			  	}
 			  	
 			  	
+				draw();
 			  	document.getElementById("info").innerText = "fps:"+Math.round(1000/(currentTime-previousTime));
 			  	previousTime = currentTime;
 			  	requestAnimationFrame(update);
 			}
 			
+			function draw(){
+				context.clearRect(0, 0, 400, 200);
+				context.fillStyle = "#FFFFFF",
+				context.fillRect(0,0,400,200);
+				
+				
+				context.fillStyle = "#00A";
+				for(var i = 0; i < obstacles.length; i++){
+					
+					context.fillRect(obstacles[i].x,obstacles[i].y,obstacles[i].width,obstacles[i].height);
+					
+				}
+				
+				context.fillStyle = "#000000";
+				context.fillRect(mouseX-10, mouseY-10, 20,20);
+				
+    			
+			}
+			
+			/*return obstacle <height>height of obsatacle</height>, <location>located on top(0), located on bottom(1)</location>*/
+			function Obstacle(height, width, x,y){
+				this.height = height;
+				this.width = width;
+				this.y = y;
+				this.x = x;				
+			}
+			
+			
+			
+			function createObstacle(firstTime){
+				
+				var height = Math.floor((Math.random()*7)+4);
+	  			var y = 0;
+	  			if(Math.floor((Math.random()*2))==0){y = 0;}
+	  			else{y = 200-height*10;}
+	  			
+	  			if(firstTime)obstacles[obstacles.length] = new Obstacle(height*10,20,obstacles.length*80 +400,y);
+				else obstacles[obstacles.length] = new Obstacle(height*10,20,obstacles[obstacles.length-1].x+60,y);
+				
+				//if(firstTime == 1)obstacles[obstacles.length] = new Obstacle(50,50,100,100);
+			}	
+			
+			function collides(a, b)
+			{
+			  	return a.x < b.x + b.width &&
+				       a.x + a.width > b.x &&
+				       a.y < b.y + b.height &&
+				       a.y + a.height > b.y;
+			}
+			
 			requestAnimationFrame(update);
 		  </script>
+		  	<p id="info">-</p><br />
+			<p id="info1">-</p><br />
+			<p id="info2">-</p><br />
 </body>
-	</body>
+	
 </html>
