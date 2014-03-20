@@ -3,7 +3,7 @@
 		
 	</head>
 	<body>
-		<body style="background-color: white; margin:0px;">
+		<body style="backLayerground-color: white; margin:0px;">
 
 		  <canvas id="gameCanvas" width="400" height="200">-</canvas>
 		  <script>
@@ -20,26 +20,30 @@
 			    // Place element where the finger is
 			    if(!(touch.pageY == 0 && touch.pageX == 0) && gameState == 1)
 			    {
-			    	mouseX = touch.pageX;
-			    	mouseY = touch.pageY;
+			    	playerX = touch.pageX;
+			    	playerY = touch.pageY;
+			    	moving = true;
 			    }
-			    document.getElementById("info1").innerText = mouseX+":"+mouseY;
+			    document.getElementById("info1").innerText = playerX+":"+playerY;
 			  }
 			}, false);
 			
 			canvas.addEventListener('touchend', function(event){
-			    if (gameState == 0) { gameState = 1;}
+			    if (gameState == 0) { gameState = 1; }
+			    if (dead && gameState == 2) { setupGame(); gameState = 0; }
 			}, false);
 			
 
             //Player
-			var mouseX = 190, mouseY = 90;
-			var trailRects = new Array();
-			var speed = 3;
+			var playerX = 190, playerY = 90;
+			var speed = 3.0;
+			var trailRects = new Array(); //trail after player
+			var elapsedFallingTime = 0;
+
+			var dead = false;
 
 
-
-			/*GameStates: 0 - menu, 1 - loading 2 -game*/
+			/*GameStates: 0 - menu, 1 - game, 2 - game over*/
 			var gameState = 0;
 			
             /*Menu variables*/
@@ -50,57 +54,87 @@
 			var start = null;
 			var currentTime = 0, previousTime = 0;
 			
-			/*Timer for events*/
-			var elapsedTextTime = 0;
-			
-			var movingObstaclesTime = 0;
 			var moving = false;
 			
 			/*Obstacles*/
 			var obstacles = new Array();
 			
 			
-			/*Background*/
-			var back = new Array();
-			var middle = new Array();
-			var front = new Array();
+			/*Rectangle*/
+			var backLayer = new Array();
+			var middleLayer = new Array();
 			
-			var middleGeneration = new BgGenerationSettings(0, 14, 18, 14);
-			var backGeneratation = new BgGenerationSettings(0,10,14,10);
+			var middleLayerGeneration = new RectangleGenerationSettings(0, 14, 18, 14);
+			var backLayerGeneratation = new RectangleGenerationSettings(0, 10, 14, 10);
 
-            /**/
-			function BgGenerationSettings(difference, height, upLimit, downLimit){
+
+			function setupGame() {
+			    //Player
+			    playerX = 190, playerY = 90;
+			    speed = 3.0;
+			    trailRects = new Array(); //trail after player
+			    elapsedFallingTime = 0;
+
+			    dead = false;
+
+
+			    /*GameStates: 0 - menu, 1 - game, 2 - game over*/
+			    gameState = 0;
+
+			    /*Menu variables*/
+			    textX = -100, textY = 50;
+			    textOffsetY = 0, textOffsetX;
+
+			    /*Tracking time*/
+			    start = null;
+			    currentTime = 0, previousTime = 0;
+
+			    moving = false;
+
+			    /*Obstacles*/
+			    obstacles = new Array();
+
+
+			    /*Rectangle*/
+			    backLayer = new Array();
+			    middleLayer = new Array();
+
+			    middleLayerGeneration = new RectangleGenerationSettings(0, 14, 18, 14);
+			    backLayerGeneratation = new RectangleGenerationSettings(0, 10, 14, 10);
+			}
+
+			function RectangleGenerationSettings(difference, height, upLimit, downLimit) {
 			    this.difference = difference;
 			    this.height = height;
 			    this.upLimit = upLimit;
 			    this.downLimit = downLimit;
 			}
+            /**/
 			
-			
-			function Background(x, y, width, height){
+			function Rectangle(x, y, width, height){
 				this.x = x;
 				this.y = y;
 				this.width = width;
 				this.height = height;
 			}
 			
-			function createMiddleBackground(){
+			function createMiddleRectangle(){
 			    
-			    if (middle.length == 0) middle[middle.length] = new Background(0, 0, 20, middleGeneration.height + middleGeneration.difference);
-			    else middle[middle.length] = new Background(middle[middle.length - 1].x + 20, 0, 20, middleGeneration.height+middleGeneration.difference);
+			    if (middleLayer.length == 0) middleLayer[middleLayer.length] = new Rectangle(0, 0, 20, middleLayerGeneration.height + middleLayerGeneration.difference);
+			    else middleLayer[middleLayer.length] = new Rectangle(middleLayer[middleLayer.length - 1].x + 20, 0, 20, middleLayerGeneration.height+middleLayerGeneration.difference);
 
-			    middleGeneration.difference = Math.floor((Math.random() * 3) - 1)
-			    if (middleGeneration.height + middleGeneration.difference > middleGeneration.downLimit || middleGeneration.height + middleGeneration.difference < middleGeneration.upLimit) { middleGeneration.difference = -middleGeneration.difference; }
+			    middleLayerGeneration.difference = Math.floor((Math.random() * 3) - 1)
+			    if (middleLayerGeneration.height + middleLayerGeneration.difference > middleLayerGeneration.downLimit || middleLayerGeneration.height + middleLayerGeneration.difference < middleLayerGeneration.upLimit) { middleLayerGeneration.difference = -middleLayerGeneration.difference; }
 			    
 			}
 
-			function createBackBackground() {
+			function createBackRectangle() {
 
-			    if (back.length == 0) back[back.length] = new Background(0, 0, 20, backGeneratation.height + backGeneratation.difference);
-			    else back[back.length] = new Background(back[back.length - 1].x + 20, 0, 20, backGeneratation.height + backGeneratation.difference);
+			    if (backLayer.length == 0) backLayer[backLayer.length] = new Rectangle(0, 0, 20, backLayerGeneratation.height + backLayerGeneratation.difference);
+			    else backLayer[backLayer.length] = new Rectangle(backLayer[backLayer.length - 1].x + 20, 0, 20, backLayerGeneratation.height + backLayerGeneratation.difference);
 
-			    backGeneratation.difference = Math.floor((Math.random() * 3) - 1)
-			    if (backGeneratation.height + backGeneratation.difference > backGeneratation.downLimit || backGeneratation.height + backGeneratation.difference < backGeneratation.upLimit) { backGeneratation.difference = -backGeneratation.difference; }
+			    backLayerGeneratation.difference = Math.floor((Math.random() * 3) - 1)
+			    if (backLayerGeneratation.height + backLayerGeneratation.difference > backLayerGeneratation.downLimit || backLayerGeneratation.height + backLayerGeneratation.difference < backLayerGeneratation.upLimit) { backLayerGeneratation.difference = -backLayerGeneratation.difference; }
 
 			}
 
@@ -109,141 +143,132 @@
 			  	currentTime = gameTime-start;
 			  	
 			  	if(gameState == 0){
-			  		
-			  		elapsedTextTime += currentTime - previousTime;
-			  		if (elapsedTextTime >= 10) {
-			  		    elapsedTextTime = 0;
-			  		    //textOffsetX = Math.floor(Math.random() * 4) - 2;
-			  		    //textOffsetY = Math.floor(Math.random() * 4) - 2;
-			  		}
-                    
 			  		textOffsetX = Math.sin(gameTime / 200) * 10 ;
-			  		
-
-			  		mouseY = Math.sin(gameTime/200)*20+90;
-			  		
-			  		
-			  		
-			  		
-			  		
+			  		playerY = Math.sin(gameTime/200)*20+90;		  		
 			  	}
 			  	else if(gameState == 1){
 			  		if(obstacles.length < 10){
-			  			if(!moving)createObstacle(true);
+			  			if(obstacles.length==0)createObstacle(true);
 			  			else createObstacle();
-			  			
-			  			
-			  		}else if(mouseX > 0 || mouseY>0){
-			  			moving = true;
 			  		}
 
-			  		
-			  		//document.getElementById("info1").innerText = ":"+obstacles.length;
-				  	
-				  	
-				  	movingObstaclesTime += (currentTime-previousTime);
-				  	
-				  	
 				  	/*Moving obstacles*/
 				  	if (moving) {
-				  	   
 				  		for(var i = 0; i < obstacles.length; i++){
 							obstacles[i].x -= speed;
 							if(obstacles[i].x <= 0-obstacles[i].width){obstacles.shift(); i--;}
 				  		}
-				  		
-
-						
+				  		if (textOffsetX < context.measureText("TAP ANYWHERE TO START").width) { textOffsetX -= speed; }
 				  	}
-				  	
-				  	
+
 				  	/*Collision with player*/
 				  	for(var i = 0; i < obstacles.length; i++){
-				  		if(collides(obstacles[i],new Obstacle(20,20,mouseX-10, mouseY-1))){
-				  			document.getElementById("info2").innerText = "GameOver";}
+				  		if(collides(obstacles[i],new Obstacle(20,20,playerX-10, playerY-1))){
+				  		    gameState = 2;
+				  		    playerX = obstacles[i].x - 10;
+				  		    speed = 0;
+				  		}
 				  	}
 			  	}
+			  	if (gameState != 2) {
+			  	    /*Player trail stuff*/
+			  	    trailRects[trailRects.length] = new Rectangle(playerX - 11, playerY - 10 + 9, 4, 3);
+			  	    if (trailRects.length > 10) { trailRects.shift(); }
+			  	    for (var i = 0; i < trailRects.length; i++) {
 
-			  	trailRects[trailRects.length] = new Background(mouseX - 11, mouseY - 10 + 9, 4, 3);
-			  	if (trailRects.length > 10) { trailRects.shift(); }
-			  	for (var i = 0; i < trailRects.length; i++) {
+			  	        trailRects[i].x -= speed;
 
-			  	    trailRects[i].x -= speed;
+			  	    }
 
+			  	    /*Moving backLayerground*/
+			  	    if (middleLayer.length < 25) {
+			  	        createMiddleRectangle();
+			  	    }
+			  	    if (backLayer.length < 25) {
+			  	        createBackRectangle();
+			  	    }
+			  	    for (var i = 0; i < middleLayer.length; i++) {
+			  	        middleLayer[i].x -= 2
+			  	        if (middleLayer[i].x <= -middleLayer[i].width) { middleLayer.shift(); i--; }
+			  	    }
+			  	    for (var i = 0; i < backLayer.length; i++) {
+			  	        backLayer[i].x -= 1
+			  	        if (backLayer[i].x <= -backLayer[i].width) { backLayer.shift(); i--; }
+			  	    }
 			  	}
-
-			    /*Moving background*/
-			  	if (middle.length < 25) {
-			  	    createMiddleBackground();
-			  	}
-			  	if (back.length < 25) {
-			  	    createBackBackground();
-			  	}
-			  	for (var i = 0; i < middle.length; i++) {
-			  	    middle[i].x -= 2
-			  	    if (middle[i].x <= -middle[i].width) { middle.shift(); i--; }
-			  	}
-			  	for (var i = 0; i < back.length; i++) {
-			  	    back[i].x -= 1
-			  	    if (back[i].x <= -back[i].width) { back.shift(); i--; }
+			  	else {
+			  	    
+			  	    speed += 0.2;
+			  	    playerY += speed;
+			  	    if (playerY >= 200 - 10) { playerY = 200 - 10; }
+			  	    for (var i = 0; i < trailRects.length; i++) {
+			  	        trailRects[i].y += speed - ((trailRects.length-i)/5);
+			  	        if (trailRects[i].y >= 200 - 3) { trailRects[i].y = 200 - 3; }
+			  	    }
+			  	        
+			  	    if (trailRects[0].y == 200 - 3) {
+			  	        dead = true;
+			  	    }
+			  	    
+			  	   
 			  	}
                 
 
 
-				draw();
+			  	draw();
+
 			  	document.getElementById("info").innerText = "fps:"+Math.round(1000/(currentTime-previousTime));
 			  	previousTime = currentTime;
 			  	requestAnimationFrame(update);
 			}
 			
 			function draw(){
-				context.clearRect(0, 0, 400, 200);
-
-				context.fillStyle = "#A0A0A0";
+				context.fillStyle = "#7A7A7A";
 				context.fillRect(0, 0, 400, 200);
-				for (var i = 0; i < middle.length; i++) {
+
+                /*Background*/
+				for (var i = 0; i < middleLayer.length; i++) {
 				    context.fillStyle = "#404040";
-				    context.fillRect(middle[i].x, middle[i].y, 20, middle[i].height * 10);
-				    //alert(middle[i].height);
+				    context.fillRect(middleLayer[i].x, middleLayer[i].y, 20, middleLayer[i].height * 10);
 				}
-				for (var i = 0; i < back.length; i++) {
+				for (var i = 0; i < backLayer.length; i++) {
 				    context.fillStyle = "#000000";
-				    context.fillRect(back[i].x, back[i].y, 20, back[i].height * 10);
-				    //alert(back[i].x+"x:"+middle[i].height+"h:"+back[i].y+"y:w"+back[i].width);
+				    context.fillRect(backLayer[i].x, backLayer[i].y, 20, backLayer[i].height * 10);
 				}
+
 				drawMoon();
 
 				if(gameState == 0){
-				    
-
 				    context.fillStyle = "#A0A0A0";
-				    context.font = "16pt Arial";
-				    
+				    context.font = "16pt Arial";				    
 				    context.fillText("TAP ANYWHERE TO START", 200 - context.measureText("TAP ANYWHERE TO START").width/2 +textOffsetX - 50, textY+textOffsetY);
-
 			  	}
-				else if(gameState==1){
-					
-					
-					
-					context.fillStyle = "#00A";
-					for(var i = 0; i < obstacles.length; i++){
-						
+				else if(gameState == 1 || gameState == 2){
+				    context.fillStyle = "#C0C0C0";
+
+					for(var i = 0; i < obstacles.length; i++){	
 						context.fillRect(obstacles[i].x,obstacles[i].y,obstacles[i].width,obstacles[i].height);
-						
 					}
-					
-					
-					
+
+					context.fillStyle = "#A0A0A0";
+					context.font = "16pt Arial";
+					context.fillText("TOUCH AND HOLD", 200 - context.measureText("TOUCH AND HOLD").width / 2 + textOffsetX - 50, textY + textOffsetY);
+
+					if (dead) {
+					    context.fillStyle = "#7F0000";
+					    context.font = "19pt Arial";
+					    context.fillText("GAME OVER", 200 - context.measureText("GAME OVER").width / 2 - 50, textY + textOffsetY);
+					}
+
 				}
-				drawPlayer(mouseX, mouseY);
+
+				drawPlayer(playerX, playerY);
                 
 				context.fillStyle = "#7F0000";
+
 				for (var i = 0; i < trailRects.length; i++) {
 				    context.fillRect(trailRects[i].x, trailRects[i].y, trailRects[i].width, trailRects[i].height);
 				}
-				
-    			
 			}
 			
 
@@ -270,7 +295,8 @@
 			    context.fillStyle = "#FFFFFF";
 			    context.fillRect(300+10, 10+5,30, 30);
 			}
-			/*return obstacle <height>height of obsatacle</height>, <location>located on top(0), located on bottom(1)</location>*/
+
+			
 			function Obstacle(height, width, x,y){
 				this.height = height;
 				this.width = width;
@@ -286,7 +312,7 @@
 	  			else{y = 200-height*10;}
 	  			
 	  			if(firstTime)obstacles[obstacles.length] = new Obstacle(height*10,20,obstacles.length*80 +400,y);
-				else obstacles[obstacles.length] = new Obstacle(height*10,20,obstacles[obstacles.length-1].x+60,y);
+				else obstacles[obstacles.length] = new Obstacle(height*10,20,obstacles[obstacles.length-1].x+80,y);
 				
 				//if(firstTime == 1)obstacles[obstacles.length] = new Obstacle(50,50,100,100);
 			}	
