@@ -14,7 +14,7 @@
 			
 			/*touch input*/
 			canvas.addEventListener('touchmove', function(event) {
-			  // If there's exactly one finger inside this element
+			    event.preventDefault();
 			  if (event.targetTouches.length == 1) {
 			    var touch = event.targetTouches[0];
 			    // Place element where the finger is
@@ -39,7 +39,7 @@
 			var speed = 3.0;
 			var trailRects = new Array(); //trail after player
 			var elapsedFallingTime = 0;
-
+			var distance = 0;
 			var dead = false;
 
 
@@ -74,7 +74,7 @@
 			    speed = 3.0;
 			    trailRects = new Array(); //trail after player
 			    elapsedFallingTime = 0;
-
+			    distance = 0;
 			    dead = false;
 
 
@@ -165,12 +165,13 @@
 				  	for(var i = 0; i < obstacles.length; i++){
 				  		if(collides(obstacles[i],new Obstacle(20,20,playerX-10, playerY-1))){
 				  		    gameState = 2;
-				  		    playerX = obstacles[i].x - 10;
+				 
 				  		    speed = 0;
 				  		}
 				  	}
 			  	}
 			  	if (gameState != 2) {
+			  	    distance += speed;
 			  	    /*Player trail stuff*/
 			  	    trailRects[trailRects.length] = new Rectangle(playerX - 11, playerY - 10 + 9, 4, 3);
 			  	    if (trailRects.length > 10) { trailRects.shift(); }
@@ -179,7 +180,7 @@
 			  	        trailRects[i].x -= speed;
 
 			  	    }
-
+                    
 			  	    /*Moving backLayerground*/
 			  	    if (middleLayer.length < 25) {
 			  	        createMiddleRectangle();
@@ -251,13 +252,14 @@
 					}
 
 					context.fillStyle = "#A0A0A0";
-					context.font = "16pt Arial";
+					context.font = "16pt Arial ";
 					context.fillText("TOUCH AND HOLD", 200 - context.measureText("TOUCH AND HOLD").width / 2 + textOffsetX - 50, textY + textOffsetY);
 
 					if (dead) {
 					    context.fillStyle = "#7F0000";
-					    context.font = "19pt Arial";
-					    context.fillText("GAME OVER", 200 - context.measureText("GAME OVER").width / 2 - 50, textY + textOffsetY);
+					    context.font = "700 19pt Arial";
+					    context.fillText("GAME OVER!", 200 - context.measureText("GAME OVER").width / 2 - 50, textY + textOffsetY);
+					    context.fillText("YOUR SCORE: "+distance/10+" METERS", 200 - context.measureText("GAME OVER").width / 2 - 100, textY + textOffsetY+50);
 					}
 
 				}
