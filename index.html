@@ -18,7 +18,7 @@
 			  if (event.targetTouches.length == 1) {
 			    var touch = event.targetTouches[0];
 			    // Place element where the finger is
-			    if(!(touch.pageY == 0 && touch.pageX == 0))
+			    if(!(touch.pageY == 0 && touch.pageX == 0) && gameState == 1)
 			    {
 			    	mouseX = touch.pageX;
 			    	mouseY = touch.pageY;
@@ -27,16 +27,19 @@
 			  }
 			}, false);
 			
-			canvas.addEventListener('touchleave', function(event){
-				if(event.targetTouches.length==1){
-					var touch = event.targetTouches[0];
-					
-				}
+			canvas.addEventListener('touchend', function(event){
+			    if (gameState == 0) { gameState = 1;}
 			}, false);
 			
-			var mouseX = -10, mouseY = -10;
-			
-			/*GameStates: 0 - menu, 1 - game*/
+
+            //Player
+			var mouseX = 190, mouseY = 90;
+			var trailRects = new Array();
+			var speed = 3;
+
+
+
+			/*GameStates: 0 - menu, 1 - loading 2 -game*/
 			var gameState = 0;
 			
             /*Menu variables*/
@@ -48,7 +51,7 @@
 			var currentTime = 0, previousTime = 0;
 			
 			/*Timer for events*/
-			var elapsedTime = 0;
+			var elapsedTextTime = 0;
 			
 			var movingObstaclesTime = 0;
 			var moving = false;
@@ -106,27 +109,21 @@
 			  	currentTime = gameTime-start;
 			  	
 			  	if(gameState == 0){
-			  		if(middle.length < 25){
-			  		    createMiddleBackground();
+			  		
+			  		elapsedTextTime += currentTime - previousTime;
+			  		if (elapsedTextTime >= 10) {
+			  		    elapsedTextTime = 0;
+			  		    //textOffsetX = Math.floor(Math.random() * 4) - 2;
+			  		    //textOffsetY = Math.floor(Math.random() * 4) - 2;
 			  		}
-			  		if (back.length < 25) {
-			  		    createBackBackground();
-			  		}
-			  		elapsedTime += currentTime - previousTime;
-			  		if (elapsedTime >= 50) {
-			  		    elapsedTime = 0;
-			  		    textOffsetX = Math.floor(Math.random() * 4) - 2;
-			  		    textOffsetY = Math.floor(Math.random() * 4) - 2;
-			  		}
-			  		    
-			  		for (var i = 0; i < middle.length; i++) {
-			  		    middle[i].x -= 3
-			  		    if (middle[i].x <= -middle[i].width) { middle.shift(); i--; }
-			  		}
-			  		for (var i = 0; i < back.length; i++) {
-			  		    back[i].x -= 1
-			  		    if (back[i].x <= -back[i].width) { back.shift(); i--; }
-			  		}
+                    
+			  		textOffsetX = Math.sin(gameTime / 200) * 10 ;
+			  		
+
+			  		mouseY = Math.sin(gameTime/200)*20+90;
+			  		
+			  		
+			  		
 			  		
 			  		
 			  	}
@@ -139,6 +136,7 @@
 			  		}else if(mouseX > 0 || mouseY>0){
 			  			moving = true;
 			  		}
+
 			  		
 			  		//document.getElementById("info1").innerText = ":"+obstacles.length;
 				  	
@@ -148,13 +146,12 @@
 				  	
 				  	/*Moving obstacles*/
 				  	if (moving) {
-				  	    var speed = 1 + currentTime / 10000;
-				  	    if (speed > 6) speed = 6;
+				  	   
 				  		for(var i = 0; i < obstacles.length; i++){
 							obstacles[i].x -= speed;
-							
 							if(obstacles[i].x <= 0-obstacles[i].width){obstacles.shift(); i--;}
 				  		}
+				  		
 
 						
 				  	}
@@ -166,7 +163,33 @@
 				  			document.getElementById("info2").innerText = "GameOver";}
 				  	}
 			  	}
-			  	
+
+			  	trailRects[trailRects.length] = new Background(mouseX - 11, mouseY - 10 + 9, 4, 3);
+			  	if (trailRects.length > 10) { trailRects.shift(); }
+			  	for (var i = 0; i < trailRects.length; i++) {
+
+			  	    trailRects[i].x -= speed;
+
+			  	}
+
+			    /*Moving background*/
+			  	if (middle.length < 25) {
+			  	    createMiddleBackground();
+			  	}
+			  	if (back.length < 25) {
+			  	    createBackBackground();
+			  	}
+			  	for (var i = 0; i < middle.length; i++) {
+			  	    middle[i].x -= 2
+			  	    if (middle[i].x <= -middle[i].width) { middle.shift(); i--; }
+			  	}
+			  	for (var i = 0; i < back.length; i++) {
+			  	    back[i].x -= 1
+			  	    if (back[i].x <= -back[i].width) { back.shift(); i--; }
+			  	}
+                
+
+
 				draw();
 			  	document.getElementById("info").innerText = "fps:"+Math.round(1000/(currentTime-previousTime));
 			  	previousTime = currentTime;
@@ -175,27 +198,28 @@
 			
 			function draw(){
 				context.clearRect(0, 0, 400, 200);
-				context.fillStyle = "#FFFFFF",
-				context.fillRect(0,0,400,200);
-				
+
+				context.fillStyle = "#A0A0A0";
+				context.fillRect(0, 0, 400, 200);
+				for (var i = 0; i < middle.length; i++) {
+				    context.fillStyle = "#404040";
+				    context.fillRect(middle[i].x, middle[i].y, 20, middle[i].height * 10);
+				    //alert(middle[i].height);
+				}
+				for (var i = 0; i < back.length; i++) {
+				    context.fillStyle = "#000000";
+				    context.fillRect(back[i].x, back[i].y, 20, back[i].height * 10);
+				    //alert(back[i].x+"x:"+middle[i].height+"h:"+back[i].y+"y:w"+back[i].width);
+				}
+				drawMoon();
+
 				if(gameState == 0){
-				    context.fillStyle = "#A0A0A0";
-				    context.fillRect(0, 0, 400, 200);
-				    for (var i = 0; i < middle.length; i++) {
-				        context.fillStyle = "#404040";
-				        context.fillRect(middle[i].x, middle[i].y, 20 , middle[i].height*10);
-				        //alert(middle[i].height);
-				    }
-				    for (var i = 0; i < back.length; i++) {
-				        context.fillStyle = "#000000";
-				        context.fillRect(back[i].x, back[i].y, 20, back[i].height * 10);
-				        //alert(back[i].x+"x:"+middle[i].height+"h:"+back[i].y+"y:w"+back[i].width);
-				    }
+				    
 
 				    context.fillStyle = "#A0A0A0";
 				    context.font = "16pt Arial";
 				    
-				    context.fillText("TAP ANYWHERE TO START", 200 - context.measureText("TAP ANYWHERE TO START").width/2 +textOffsetX, textY+textOffsetY);
+				    context.fillText("TAP ANYWHERE TO START", 200 - context.measureText("TAP ANYWHERE TO START").width/2 +textOffsetX - 50, textY+textOffsetY);
 
 			  	}
 				else if(gameState==1){
@@ -209,13 +233,43 @@
 						
 					}
 					
-					context.fillStyle = "#000000";
-					context.fillRect(mouseX-10, mouseY-10, 20,20);
+					
+					
+				}
+				drawPlayer(mouseX, mouseY);
+                
+				context.fillStyle = "#7F0000";
+				for (var i = 0; i < trailRects.length; i++) {
+				    context.fillRect(trailRects[i].x, trailRects[i].y, trailRects[i].width, trailRects[i].height);
 				}
 				
     			
 			}
 			
+
+			function drawPlayer(x, y) {
+                //HEAD
+			    context.fillStyle = "#FFE97F";
+			    context.fillRect(x - 10, y - 10, 20, 20);
+			    //glasses
+			    context.fillStyle = "#7F0000";
+			    context.fillRect(x - 10, y - 10 + 8, 20, 3);
+			    context.fillRect(x - 10 + 3, y - 10 + 7, 17, 1);
+			    context.fillRect(x - 10 + 8, y - 10 + 6, 12, 1);
+			    context.fillStyle = "#00FFFF";
+			    context.fillRect(x - 10 + 16, y - 10 + 7, 4, 3);
+			    context.fillStyle = "#000000";
+			    context.fillRect(x - 10 + 17, y - 10 + 16, 3, 2);
+
+                
+			}
+
+			function drawMoon() {
+			    context.fillStyle = "#373737";
+			    context.fillRect(300, 0+5, 50, 50);
+			    context.fillStyle = "#FFFFFF";
+			    context.fillRect(300+10, 10+5,30, 30);
+			}
 			/*return obstacle <height>height of obsatacle</height>, <location>located on top(0), located on bottom(1)</location>*/
 			function Obstacle(height, width, x,y){
 				this.height = height;
@@ -223,8 +277,6 @@
 				this.y = y;
 				this.x = x;				
 			}
-			
-			
 			
 			function createObstacle(firstTime){
 				
