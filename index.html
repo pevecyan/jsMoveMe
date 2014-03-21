@@ -1,337 +1,380 @@
 <html>
 	<head>
-		
-	</head>
-	<body>
-		<body style="backLayerground-color: white; margin:0px;">
+             
+        <meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, width=device-width">
+        <meta name="apple-mobile-web-app-capable" content="yes">
 
-		  <canvas id="gameCanvas" width="400" height="200">-</canvas>
-		  <script>
-		    var canvas = document.getElementById('gameCanvas');
-		    var context = canvas.getContext('2d');
-		
-		    window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
-			
-			/*touch input*/
-			canvas.addEventListener('touchmove', function(event) {
-			    event.preventDefault();
-			  if (event.targetTouches.length == 1) {
-			    var touch = event.targetTouches[0];
-			    // Place element where the finger is
-			    if(!(touch.pageY == 0 && touch.pageX == 0) && gameState == 1)
-			    {
-			    	playerX = touch.pageX;
-			    	playerY = touch.pageY;
-			    	moving = true;
-			    }
-			    document.getElementById("info1").innerText = playerX+":"+playerY;
-			  }
-			}, false);
-			
-			canvas.addEventListener('touchend', function(event){
-			    if (gameState == 0) { gameState = 1; }
-			    if (dead && gameState == 2) { setupGame(); gameState = 0; }
-			}, false);
-			
+        <style>
+            #container gameCanvas {
+                vertical-align: top;
+                display: block;
+                overflow: auto;
+            }
+        </style>
 
-            //Player
-			var playerX = 190, playerY = 90;
-			var speed = 3.0;
-			var trailRects = new Array(); //trail after player
-			var elapsedFallingTime = 0;
-			var distance = 0;
-			var dead = false;
+        <script>
+            
+        </script>
 
+    </head>
+    <body style="background-color: white; margin:0px;" onload="resizeCanvas()" onresize="resizeCanvas()">
+        <div id="container">
+            <canvas id="gameCanvas" width="400" height="200" ></canvas>
+        </div>
+            <script>
+                function resizeCanvas() {
+                    document.getElementById('gameCanvas').setAttribute('width', window.innerWidth);
+                    CANVAS_WIDTH = window.innerWidth;
+                    document.getElementById('gameCanvas').setAttribute('height', window.innerHeight);
+                    CANVAS_HEIGHT = window.innerHeight;
 
-			/*GameStates: 0 - menu, 1 - game, 2 - game over*/
-			var gameState = 0;
-			
-            /*Menu variables*/
-			var textX = -100, textY = 50;
-			var textOffsetY = 0, textOffsetX;
-			
-			/*Tracking time*/
-			var start = null;
-			var currentTime = 0, previousTime = 0;
-			
-			var moving = false;
-			
-			/*Obstacles*/
-			var obstacles = new Array();
-			
-			
-			/*Rectangle*/
-			var backLayer = new Array();
-			var middleLayer = new Array();
-			
-			var middleLayerGeneration = new RectangleGenerationSettings(0, 14, 18, 14);
-			var backLayerGeneratation = new RectangleGenerationSettings(0, 10, 14, 10);
+                    if (CANVAS_HEIGHT * 2 > CANVAS_WIDTH) { CANVAS_HEIGHT = CANVAS_WIDTH / 2; }
+                    document.getElementById('gameCanvas').setAttribute('height', CANVAS_HEIGHT);
 
-
-			function setupGame() {
-			    //Player
-			    playerX = 190, playerY = 90;
-			    speed = 3.0;
-			    trailRects = new Array(); //trail after player
-			    elapsedFallingTime = 0;
-			    distance = 0;
-			    dead = false;
-
-
-			    /*GameStates: 0 - menu, 1 - game, 2 - game over*/
-			    gameState = 0;
-
-			    /*Menu variables*/
-			    textX = -100, textY = 50;
-			    textOffsetY = 0, textOffsetX;
-
-			    /*Tracking time*/
-			    start = null;
-			    currentTime = 0, previousTime = 0;
-
-			    moving = false;
-
-			    /*Obstacles*/
-			    obstacles = new Array();
-
-
-			    /*Rectangle*/
-			    backLayer = new Array();
-			    middleLayer = new Array();
-
-			    middleLayerGeneration = new RectangleGenerationSettings(0, 14, 18, 14);
-			    backLayerGeneratation = new RectangleGenerationSettings(0, 10, 14, 10);
-			}
-
-			function RectangleGenerationSettings(difference, height, upLimit, downLimit) {
-			    this.difference = difference;
-			    this.height = height;
-			    this.upLimit = upLimit;
-			    this.downLimit = downLimit;
-			}
-            /**/
-			
-			function Rectangle(x, y, width, height){
-				this.x = x;
-				this.y = y;
-				this.width = width;
-				this.height = height;
-			}
-			
-			function createMiddleRectangle(){
-			    
-			    if (middleLayer.length == 0) middleLayer[middleLayer.length] = new Rectangle(0, 0, 20, middleLayerGeneration.height + middleLayerGeneration.difference);
-			    else middleLayer[middleLayer.length] = new Rectangle(middleLayer[middleLayer.length - 1].x + 20, 0, 20, middleLayerGeneration.height+middleLayerGeneration.difference);
-
-			    middleLayerGeneration.difference = Math.floor((Math.random() * 3) - 1)
-			    if (middleLayerGeneration.height + middleLayerGeneration.difference > middleLayerGeneration.downLimit || middleLayerGeneration.height + middleLayerGeneration.difference < middleLayerGeneration.upLimit) { middleLayerGeneration.difference = -middleLayerGeneration.difference; }
-			    
-			}
-
-			function createBackRectangle() {
-
-			    if (backLayer.length == 0) backLayer[backLayer.length] = new Rectangle(0, 0, 20, backLayerGeneratation.height + backLayerGeneratation.difference);
-			    else backLayer[backLayer.length] = new Rectangle(backLayer[backLayer.length - 1].x + 20, 0, 20, backLayerGeneratation.height + backLayerGeneratation.difference);
-
-			    backLayerGeneratation.difference = Math.floor((Math.random() * 3) - 1)
-			    if (backLayerGeneratation.height + backLayerGeneratation.difference > backLayerGeneratation.downLimit || backLayerGeneratation.height + backLayerGeneratation.difference < backLayerGeneratation.upLimit) { backLayerGeneratation.difference = -backLayerGeneratation.difference; }
-
-			}
-
-			function update(gameTime){
-			  	if(start == null){start = gameTime;}
-			  	currentTime = gameTime-start;
-			  	
-			  	if(gameState == 0){
-			  		textOffsetX = Math.sin(gameTime / 200) * 10 ;
-			  		playerY = Math.sin(gameTime/200)*20+90;		  		
-			  	}
-			  	else if(gameState == 1){
-			  		if(obstacles.length < 10){
-			  			if(obstacles.length==0)createObstacle(true);
-			  			else createObstacle();
-			  		}
-
-				  	/*Moving obstacles*/
-				  	if (moving) {
-				  		for(var i = 0; i < obstacles.length; i++){
-							obstacles[i].x -= speed;
-							if(obstacles[i].x <= 0-obstacles[i].width){obstacles.shift(); i--;}
-				  		}
-				  		if (textOffsetX < context.measureText("TAP ANYWHERE TO START").width) { textOffsetX -= speed; }
-				  	}
-
-				  	/*Collision with player*/
-				  	for(var i = 0; i < obstacles.length; i++){
-				  		if(collides(obstacles[i],new Obstacle(20,20,playerX-10, playerY-1))){
-				  		    gameState = 2;
-				 
-				  		    speed = 0;
-				  		}
-				  	}
-			  	}
-			  	if (gameState != 2) {
-			  	    distance += speed;
-			  	    /*Player trail stuff*/
-			  	    trailRects[trailRects.length] = new Rectangle(playerX - 11, playerY - 10 + 9, 4, 3);
-			  	    if (trailRects.length > 10) { trailRects.shift(); }
-			  	    for (var i = 0; i < trailRects.length; i++) {
-
-			  	        trailRects[i].x -= speed;
-
-			  	    }
-                    
-			  	    /*Moving backLayerground*/
-			  	    if (middleLayer.length < 25) {
-			  	        createMiddleRectangle();
-			  	    }
-			  	    if (backLayer.length < 25) {
-			  	        createBackRectangle();
-			  	    }
-			  	    for (var i = 0; i < middleLayer.length; i++) {
-			  	        middleLayer[i].x -= 2
-			  	        if (middleLayer[i].x <= -middleLayer[i].width) { middleLayer.shift(); i--; }
-			  	    }
-			  	    for (var i = 0; i < backLayer.length; i++) {
-			  	        backLayer[i].x -= 1
-			  	        if (backLayer[i].x <= -backLayer[i].width) { backLayer.shift(); i--; }
-			  	    }
-			  	}
-			  	else {
-			  	    
-			  	    speed += 0.2;
-			  	    playerY += speed;
-			  	    if (playerY >= 200 - 10) { playerY = 200 - 10; }
-			  	    for (var i = 0; i < trailRects.length; i++) {
-			  	        trailRects[i].y += speed - ((trailRects.length-i)/5);
-			  	        if (trailRects[i].y >= 200 - 3) { trailRects[i].y = 200 - 3; }
-			  	    }
-			  	        
-			  	    if (trailRects[0].y == 200 - 3) {
-			  	        dead = true;
-			  	    }
-			  	    
-			  	   
-			  	}
+                    setupGame();
+                }
                 
 
-
-			  	draw();
-
-			  	document.getElementById("info").innerText = "fps:"+Math.round(1000/(currentTime-previousTime));
-			  	previousTime = currentTime;
-			  	requestAnimationFrame(update);
-			}
-			
-			function draw(){
-				context.fillStyle = "#7A7A7A";
-				context.fillRect(0, 0, 400, 200);
-
-                /*Background*/
-				for (var i = 0; i < middleLayer.length; i++) {
-				    context.fillStyle = "#404040";
-				    context.fillRect(middleLayer[i].x, middleLayer[i].y, 20, middleLayer[i].height * 10);
-				}
-				for (var i = 0; i < backLayer.length; i++) {
-				    context.fillStyle = "#000000";
-				    context.fillRect(backLayer[i].x, backLayer[i].y, 20, backLayer[i].height * 10);
-				}
-
-				drawMoon();
-
-				if(gameState == 0){
-				    context.fillStyle = "#A0A0A0";
-				    context.font = "16pt Arial";				    
-				    context.fillText("TAP ANYWHERE TO START", 200 - context.measureText("TAP ANYWHERE TO START").width/2 +textOffsetX - 50, textY+textOffsetY);
-			  	}
-				else if(gameState == 1 || gameState == 2){
-				    context.fillStyle = "#C0C0C0";
-
-					for(var i = 0; i < obstacles.length; i++){	
-						context.fillRect(obstacles[i].x,obstacles[i].y,obstacles[i].width,obstacles[i].height);
-					}
-
-					context.fillStyle = "#A0A0A0";
-					context.font = "16pt Arial ";
-					context.fillText("TOUCH AND HOLD", 200 - context.measureText("TOUCH AND HOLD").width / 2 + textOffsetX - 50, textY + textOffsetY);
-
-					if (dead) {
-					    context.fillStyle = "#7F0000";
-					    context.font = "700 19pt Arial";
-					    context.fillText("GAME OVER!", 200 - context.measureText("GAME OVER").width / 2 - 50, textY + textOffsetY);
-					    context.fillText("YOUR SCORE: "+distance/10+" METERS", 200 - context.measureText("GAME OVER").width / 2 - 100, textY + textOffsetY+50);
-					}
-
-				}
-
-				drawPlayer(playerX, playerY);
+                var canvas = document.getElementById('gameCanvas');
                 
-				context.fillStyle = "#7F0000";
+                var context = canvas.getContext('2d');
 
-				for (var i = 0; i < trailRects.length; i++) {
-				    context.fillRect(trailRects[i].x, trailRects[i].y, trailRects[i].width, trailRects[i].height);
-				}
-			}
-			
+                var CANVAS_WIDTH = 400;
+                var CANVAS_HEIGHT = 200;
 
-			function drawPlayer(x, y) {
-                //HEAD
-			    context.fillStyle = "#FFE97F";
-			    context.fillRect(x - 10, y - 10, 20, 20);
-			    //glasses
-			    context.fillStyle = "#7F0000";
-			    context.fillRect(x - 10, y - 10 + 8, 20, 3);
-			    context.fillRect(x - 10 + 3, y - 10 + 7, 17, 1);
-			    context.fillRect(x - 10 + 8, y - 10 + 6, 12, 1);
-			    context.fillStyle = "#00FFFF";
-			    context.fillRect(x - 10 + 16, y - 10 + 7, 4, 3);
-			    context.fillStyle = "#000000";
-			    context.fillRect(x - 10 + 17, y - 10 + 16, 3, 2);
+                window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
 
-                
-			}
+                /*touch input*/
+                canvas.addEventListener('touchmove', function (event) {
+                    event.preventDefault();
+                    if (event.targetTouches.length == 1) {
+                        var touch = event.targetTouches[0];
+                        // Place element where the finger is
+                        if (!(touch.pageY == 0 && touch.pageX == 0) && gameState == 1) {
+                            playerX = touch.pageX;
+                            playerY = touch.pageY;
+                            moving = true;
+                        }
+                        if (playerY < 0) { playerY = 0; }
+                        if (playerY > CANVAS_HEIGHT) { playerY = CANVAS_HEIGHT; }
+                    }
+                }, false);
 
-			function drawMoon() {
-			    context.fillStyle = "#373737";
-			    context.fillRect(300, 0+5, 50, 50);
-			    context.fillStyle = "#FFFFFF";
-			    context.fillRect(300+10, 10+5,30, 30);
-			}
+                canvas.addEventListener('touchend', function (event) {
+                    if (gameState == 0) { gameState = 1; }
+                    if (dead && gameState == 2) { setupGame(); gameState = 0; }
+                }, false);
 
-			
-			function Obstacle(height, width, x,y){
-				this.height = height;
-				this.width = width;
-				this.y = y;
-				this.x = x;				
-			}
-			
-			function createObstacle(firstTime){
-				
-				var height = Math.floor((Math.random()*7)+4);
-	  			var y = 0;
-	  			if(Math.floor((Math.random()*2))==0){y = 0;}
-	  			else{y = 200-height*10;}
-	  			
-	  			if(firstTime)obstacles[obstacles.length] = new Obstacle(height*10,20,obstacles.length*80 +400,y);
-				else obstacles[obstacles.length] = new Obstacle(height*10,20,obstacles[obstacles.length-1].x+80,y);
-				
-				//if(firstTime == 1)obstacles[obstacles.length] = new Obstacle(50,50,100,100);
-			}	
-			
-			function collides(a, b)
-			{
-			  	return a.x < b.x + b.width &&
-				       a.x + a.width > b.x &&
-				       a.y < b.y + b.height &&
-				       a.y + a.height > b.y;
-			}
-			
-			requestAnimationFrame(update);
-		  </script>
-		  	<p id="info">-</p><br />
-			<p id="info1">-</p><br />
-			<p id="info2">-</p><br />
+
+                //Player
+                var playerX = CANVAS_WIDTH/2-10, playerY = CANVAS_HEIGHT/2-10;
+                var speed = 3.0;
+                var trailRects = new Array(); //trail after player
+                var elapsedLevelTime = 0;
+                var distance = 0;
+                var dead = false;
+
+
+                /*GameStates: 0 - menu, 1 - game, 2 - game over*/
+                var gameState = 0;
+
+                /*Menu variables*/
+                var textX = -100, textY = 50;
+                var textOffsetY = 0, textOffsetX;
+
+                /*Tracking time*/
+                var start = null;
+                var currentTime = 0, previousTime = 0;
+
+                var moving = false;
+
+                /*Obstacles*/
+                var obstacles = new Array();
+
+
+                /*Rectangle*/
+                var backLayer = new Array();
+                var middleLayer = new Array();
+
+                var middleLayerGeneration = new RectangleGenerationSettings(0, 14, 18, 14);
+                var backLayerGeneratation = new RectangleGenerationSettings(0, 10, 14, 10);
+
+
+                function setupGame() {
+                    //Player
+                    playerX = CANVAS_WIDTH / 2 - 10, playerY = CANVAS_HEIGHT / 2 - 10;
+                    speed = 3.0;
+                    trailRects = new Array(); //trail after player
+                    elapsedFallingTime = 0;
+                    distance = 0;
+                    dead = false;
+
+
+                    /*GameStates: 0 - menu, 1 - game, 2 - game over*/
+                    gameState = 0;
+
+                    /*Menu variables*/
+                    textX = -100, textY = 50;
+                    textOffsetY = 0, textOffsetX;
+
+                    /*Tracking time*/
+                    start = null;
+                    currentTime = 0, previousTime = 0;
+
+                    moving = false;
+
+                    /*Obstacles*/
+                    obstacles = new Array();
+
+
+                    /*Rectangle*/
+                    backLayer = new Array();
+                    middleLayer = new Array();
+
+                    middleLayerGeneration = new RectangleGenerationSettings(0, 14, 18, 14);
+                }   backLayerGeneratation = new RectangleGenerationSettings(0, 10, 14, 10);
+
+                function RectangleGenerationSettings(difference, height, upLimit, downLimit) {
+                    this.difference = difference;
+                    this.height = height;
+                    this.upLimit = upLimit;
+                    this.downLimit = downLimit;
+                }
+                /**/
+
+                function Rectangle(x, y, width, height) {
+                    this.x = x;
+                    this.y = y;
+                    this.width = width;
+                    this.height = height;
+                }
+
+                function createMiddleRectangle() {
+
+                    if (middleLayer.length == 0) middleLayer[middleLayer.length] = new Rectangle(0, 0, 20, middleLayerGeneration.height + middleLayerGeneration.difference);
+                    else middleLayer[middleLayer.length] = new Rectangle(middleLayer[middleLayer.length - 1].x + 20, 0, 20, middleLayerGeneration.height + middleLayerGeneration.difference);
+
+                    middleLayerGeneration.difference = Math.floor((Math.random() * 3) - 1)
+                    if (middleLayerGeneration.height + middleLayerGeneration.difference > middleLayerGeneration.downLimit || middleLayerGeneration.height + middleLayerGeneration.difference < middleLayerGeneration.upLimit) { middleLayerGeneration.difference = -middleLayerGeneration.difference; }
+
+                }
+
+                function createBackRectangle() {
+
+                    if (backLayer.length == 0) backLayer[backLayer.length] = new Rectangle(0, 0, 20, backLayerGeneratation.height + backLayerGeneratation.difference + (CANVAS_HEIGHT/200));
+                    else backLayer[backLayer.length] = new Rectangle(backLayer[backLayer.length - 1].x + 20, 0, 20, backLayerGeneratation.height + backLayerGeneratation.difference);
+
+                    backLayerGeneratation.difference = Math.floor((Math.random() * 3) - 1)
+                    if (backLayerGeneratation.height + backLayerGeneratation.difference > backLayerGeneratation.downLimit || backLayerGeneratation.height + backLayerGeneratation.difference < backLayerGeneratation.upLimit) { backLayerGeneratation.difference = -backLayerGeneratation.difference; }
+
+                }
+
+                function update(gameTime) {
+                    if (start == null) { start = gameTime; }
+                    currentTime = gameTime - start;
+
+                    if (gameState == 0) {
+                        textOffsetX = Math.sin(gameTime / 200) * 10;
+                        playerY = Math.sin(gameTime / 200) * 20 + 90;
+                    }
+                    else if (gameState == 1) {
+                        elapsedLevelTime += currentTime-previousTime;
+
+                        if (elapsedLevelTime > 10000) {
+                            speed += 0.5;
+                            elapsedLevelTime = 0;
+                        }
+
+
+                        if (obstacles.length < CANVAS_WIDTH/40) {
+                            if (obstacles.length == 0) createObstacle(true);
+                            else createObstacle();
+                        }
+
+                        /*Moving obstacles*/
+                        if (moving) {
+                            for (var i = 0; i < obstacles.length; i++) {
+                                obstacles[i].x -= speed;
+                                if (obstacles[i].x <= 0 - obstacles[i].width) { obstacles.shift(); i--; }
+                            }
+                            if (textOffsetX < context.measureText("TAP ANYWHERE TO START").width) { textOffsetX -= speed; }
+                        }
+
+                        /*Collision with player*/
+                        for (var i = 0; i < obstacles.length; i++) {
+                            if (collides(obstacles[i], new Obstacle(20, 20, playerX - 10, playerY - 10))) {
+                                gameState = 2;
+
+                                speed = 0;
+                            }
+                        }
+                    }
+                    if (gameState != 2) {
+                        distance += speed;
+                        /*Player trail stuff*/
+                        trailRects[trailRects.length] = new Rectangle(playerX - 11, playerY - 10 + 9, 4, 3);
+                        if (trailRects.length > 10) { trailRects.shift(); }
+                        for (var i = 0; i < trailRects.length; i++) {
+
+                            trailRects[i].x -= speed;
+
+                        }
+
+                        /*Moving backLayerground*/
+                        if (middleLayer.length < CANVAS_WIDTH/16) {
+                            createMiddleRectangle();
+                        }
+                        if (backLayer.length < CANVAS_WIDTH / 16) {
+                            createBackRectangle();
+                        }
+                        for (var i = 0; i < middleLayer.length; i++) {
+                            middleLayer[i].x -= 2
+                            if (middleLayer[i].x <= -middleLayer[i].width) { middleLayer.shift(); i--; }
+                        }
+                        for (var i = 0; i < backLayer.length; i++) {
+                            backLayer[i].x -= 1
+                            if (backLayer[i].x <= -backLayer[i].width) { backLayer.shift(); i--; }
+                        }
+                    }
+                    else {
+
+                        speed += 0.2;
+                        playerY += speed;
+                        if (playerY >= CANVAS_HEIGHT - 10) { playerY = CANVAS_HEIGHT - 10; }
+                        for (var i = 0; i < trailRects.length; i++) {
+                            trailRects[i].y += speed - ((trailRects.length - i) / 5);
+                            if (trailRects[i].y >= CANVAS_HEIGHT - 3) { trailRects[i].y = CANVAS_HEIGHT - 3; }
+                        }
+
+                        if (trailRects[0].y == CANVAS_HEIGHT - 3) {
+                            dead = true;
+                        }
+
+
+                    }
+
+
+
+                    draw();
+                    previousTime = currentTime;
+                    requestAnimationFrame(update);
+                }
+
+                function draw() {
+                    context.fillStyle = "#7A7A7A";
+                    context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+                    /*Background*/
+                    for (var i = 0; i < middleLayer.length; i++) {
+                        context.fillStyle = "#404040";
+                        context.fillRect(middleLayer[i].x, middleLayer[i].y + CANVAS_HEIGHT / 4, 20, middleLayer[i].height * 10);
+                    }
+                    for (var i = 0; i < backLayer.length; i++) {
+                        context.fillStyle = "#000000";
+                        context.fillRect(backLayer[i].x, backLayer[i].y , 20, backLayer[i].height * 10);
+                    }
+
+                    drawMoon();
+
+                    if (gameState == 0) {
+                        var font = CANVAS_WIDTH / (400 / 16);
+                        if (font > 20) font = 20;
+                        context.fillStyle = "#A0A0A0";
+                        context.font = font+"pt Arial";
+                        context.fillText("TAP ANYWHERE TO START", 200 - context.measureText("TAP ANYWHERE TO START").width / 2 + textOffsetX, textY + textOffsetY);
+                    }
+                    else if (gameState == 1 || gameState == 2) {
+                        context.fillStyle = "#C0C0C0";
+
+                        for (var i = 0; i < obstacles.length; i++) {
+                            context.fillRect(obstacles[i].x, obstacles[i].y, obstacles[i].width, obstacles[i].height);
+                        }
+                        var font = CANVAS_WIDTH / (400 / 16);
+                        if (font > 20) font = 20;
+                        context.fillStyle = "#A0A0A0";
+                        context.font = font+"pt Arial ";
+                        context.fillText("TOUCH AND HOLD", 200 - context.measureText("TOUCH AND HOLD").width / 2 + textOffsetX - 50, textY + textOffsetY);
+
+                        if (dead) {
+                            var font = CANVAS_WIDTH / (400 / 19);
+                            context.fillStyle = "#7F0000";
+                            context.font = "700 "+font+"pt Arial";
+                            context.fillText("GAME OVER!", CANVAS_WIDTH/2 - context.measureText("GAME OVER").width / 2, textY + textOffsetY);
+                            context.fillText("YOUR SCORE: " + distance / 10 + " METERS", CANVAS_WIDTH / 2 - context.measureText("YOUR SCORE: " + distance / 10 + " METERS").width / 2, textY + textOffsetY + 50);
+                        }
+
+                    }
+
+                    drawPlayer(playerX, playerY);
+
+                    context.fillStyle = "#7F0000";
+
+                    for (var i = 0; i < trailRects.length; i++) {
+                        context.fillRect(trailRects[i].x, trailRects[i].y, trailRects[i].width, trailRects[i].height);
+                    }
+                }
+
+
+                function drawPlayer(x, y) {
+                    //HEAD
+                    context.fillStyle = "#FFE97F";
+                    context.fillRect(x - 10, y - 10, 20, 20);
+                    //BODY
+                    context.fillRect(x - 35, y + 5, 30, 5);
+                    //PANTS
+                    context.fillStyle = "#0026FF";
+                    context.fillRect(x - 20, y + 5, 5, 5);
+
+                    //glasses
+                    context.fillStyle = "#7F0000";
+                    context.fillRect(x - 10, y - 10 + 8, 20, 3);
+                    context.fillRect(x - 10 + 3, y - 10 + 7, 17, 1);
+                    context.fillRect(x - 10 + 8, y - 10 + 6, 12, 1);
+                    context.fillStyle = "#00FFFF";
+                    context.fillRect(x - 10 + 16, y - 10 + 7, 4, 3);
+                    context.fillStyle = "#000000";
+                    context.fillRect(x - 10 + 17, y - 10 + 16, 3, 2);
+
+
+                }
+
+                function drawMoon() {
+                    context.fillStyle = "#373737";
+                    context.fillRect(300, 0 + 5, 50, 50);
+                    context.fillStyle = "#FFFFFF";
+                    context.fillRect(300 + 10, 10 + 5, 30, 30);
+                }
+
+
+                function Obstacle(height, width, x, y) {
+                    this.height = height;
+                    this.width = width;
+                    this.y = y;
+                    this.x = x;
+                }
+
+                function createObstacle(firstTime) {
+
+                    var height = Math.floor((Math.random() * (CANVAS_HEIGHT/20)) + 4);
+                    var y = 0;
+                    if (Math.floor((Math.random() * 2)) == 0) { y = 0; }
+                    else { y = CANVAS_HEIGHT - height * 10; }
+
+                    if (firstTime) obstacles[obstacles.length] = new Obstacle(height * 10, 20, obstacles.length * 80 + CANVAS_WIDTH, y);
+                    else obstacles[obstacles.length] = new Obstacle(height * 10, 20, obstacles[obstacles.length - 1].x + 80, y);
+
+                    //if(firstTime == 1)obstacles[obstacles.length] = new Obstacle(50,50,100,100);
+                }
+
+                function collides(a, b) {
+                    return a.x < b.x + b.width &&
+                            a.x + a.width > b.x &&
+                            a.y < b.y + b.height &&
+                            a.y + a.height > b.y;
+                }
+
+                requestAnimationFrame(update);
+            </script>
 </body>
 	
 </html>
